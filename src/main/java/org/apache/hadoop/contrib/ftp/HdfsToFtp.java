@@ -46,9 +46,9 @@ public class HdfsToFtp {
 		String srcPath=argv[0];
 		String dstPath=argv[1];
 		String queryStr=null;
-		boolean overwrite=false;
+		boolean overwrite=true;
 		if(argv.length>2){
-			if(argv[2].length()==4){
+			if(argv[2].length()==5||argv[2].length()==4){
 				overwrite="true".equals(argv[2]);
 			}else{
 				queryStr=argv[2];
@@ -80,7 +80,7 @@ public class HdfsToFtp {
 		//获取hdfs文件系统
 		Configuration conf = new Configuration();
 		FileSystem hdfsSystem = FileSystem.get(conf);
-		FileUtils.copy(hdfsSystem, hdfsPath,ftpPath,queryStr, false, true, conf);
+		FileUtils.copy(hdfsSystem, hdfsPath,ftpPath,queryStr, false, overwrite, conf);
 		
 	}
 }

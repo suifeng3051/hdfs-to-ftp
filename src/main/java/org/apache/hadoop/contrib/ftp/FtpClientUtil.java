@@ -1,15 +1,16 @@
 package org.apache.hadoop.contrib.ftp;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -163,7 +164,6 @@ public class FtpClientUtil {
 	 * @description
 	 * @param remotePath
 	 * @param autoClose
-	 * @return
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
@@ -192,7 +192,7 @@ public class FtpClientUtil {
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new FTPClientException(
-					"\u5217\u51FA\u8FDC\u7A0B\u76EE\u5F55\u4E0B\u6240\u6709\u7684\u6587\u4EF6\u65F6\u51FA\u73B0\u5F02\u5E38",
+					"",
 					e);
 		}
 		return listFileNames;
@@ -223,7 +223,7 @@ public class FtpClientUtil {
 			}
 		} catch (IOException e) {
 			throw new FTPClientException(
-					"\u5217\u51FA\u8FDC\u7A0B\u76EE\u5F55\u4E0B\u6240\u6709\u7684\u6587\u4EF6\u65F6\u51FA\u73B0\u5F02\u5E38",
+					"",
 					e);
 		}
 	}
@@ -249,7 +249,7 @@ public class FtpClientUtil {
 		if (!FTPReply.isPositiveCompletion(reply)) {
 			client.disconnect();
 		}
-		client.makeDirectory(remotePath);// \u5728\u670D\u52A1\u7AEF\u5EFA\u7ACB\u8BE5\u6587\u4EF6\u5939
+		client.makeDirectory(remotePath);
 		client.changeWorkingDirectory(remotePath);
 		boolean result = client.storeFile(fileName,
 				localInputStream);
@@ -260,9 +260,7 @@ public class FtpClientUtil {
 	/**
 	 * 
 	 * @param remotePath
-	 *            \u8FDC\u7A0B\u8DEF\u5F84
 	 * @param localPath
-	 *            \u672C\u5730\u8DEF\u5F84
 	 * @return
 	 * @throws IOException
 	 * @throws FTPClientException
@@ -276,12 +274,8 @@ public class FtpClientUtil {
 	/**
 	 * 
 	 * @param remotePath
-	 *            \u8FDC\u7A0B\u8DEF\u5F84
 	 * @param localPath
-	 *            \u8981\u4E0B\u8F7D\u7684\u8DEF\u5F84
 	 * @param fileNames
-	 *            \u6240\u6709\u8981\u4E0B\u8F7D\u7684\u6587\u4EF6\u540D\u5B57
-	 * @return
 	 * @throws IOException
 	 * @throws FTPClientException
 	 * @throws IOException
@@ -300,7 +294,7 @@ public class FtpClientUtil {
 					file.mkdirs();
 					OutputStream out = new FileOutputStream(localPath
 							+ f.getName());
-					result = client.retrieveFile(f.getName(), out); // \u4E0B\u8F7D
+					result = client.retrieveFile(f.getName(), out); 
 					out.close();
 					if (!result) {
 						break;
@@ -313,7 +307,7 @@ public class FtpClientUtil {
 				file.mkdirs();
 				OutputStream out = new FileOutputStream(localPath
 						+ File.separator + fileName);
-				result = client.retrieveFile(fileName, out); // \u4E0B\u8F7D
+				result = client.retrieveFile(fileName, out); 
 				out.close();
 				if (!result) {
 					break;
@@ -326,7 +320,6 @@ public class FtpClientUtil {
 	/**
 	 * @param client
 	 * @param fileName
-	 *            \u8FDC\u7A0B\u8DEF\u5F84\u540D
 	 * @return
 	 * @throws IOException
 	 * @throws FTPClientException
@@ -347,13 +340,7 @@ public class FtpClientUtil {
 	/**
 	 * 
 	 * @param filename
-	 *            \u8981\u4E0B\u8F7D\u7684\u6587\u4EF6\u540D
-	 *            \u4ECE\u6574\u4E2A\u670D\u52A1\u5668\u4E2D\u67E5\u627E,
-	 *            \u53EF\u80FD\u627E\u5230\u591A\u4E2A\u76F8\u540C\u540D\u5B57\u7684\u6587\u4EF6
-	 *            ,
-	 *            \u6309\u5728\u670D\u52A1\u7AEF\u7684\u8DEF\u5F84\u5728\u6307\u5B9A\u672C\u5730\u8DEF\u5F84\u4E0B\u521B\u5EFA\u60F3\u5BF9\u5E94\u7684\u8DEF\u5F84\u548C\u6587\u4EF6
 	 * @param localPath
-	 *            \u672C\u5730\u8DEF\u5F84
 	 * @return
 	 * @throws Exception
 	 */
@@ -370,7 +357,7 @@ public class FtpClientUtil {
 					File file = new File(localPath + remoteFilePath);
 					new File(file.getParent()).mkdirs();
 					out = new FileOutputStream(localPath + remoteFilePath);
-					getFTPClient().retrieveFile(filepath, out); // \u4E0B\u8F7D
+					getFTPClient().retrieveFile(filepath, out); 
 					out.close();
 				}
 			}
@@ -382,9 +369,6 @@ public class FtpClientUtil {
 
 	/**
 	 * @description 
-	 *              \u521B\u5EFA\u8FDC\u7A0B\u76EE\u5F55\u5141\u8BB8\u521B\u5EFA\u591A\u7EA7\u76EE\u5F55
-	 * @param remoteDir
-	 *            \u8FDC\u7A0B\u76EE\u5F55
 	 * @return
 	 * @throws SocketException
 	 * @throws IOException
@@ -405,21 +389,24 @@ public class FtpClientUtil {
 		}
 		return true;
 	}
-
+	public static Map<String, String> getFileNameMap(String path) throws SocketException, IOException{
+		Map<String, String> fileNameMap=new HashMap<String, String>();
+		FTPClient client= getFTPClient();
+		FTPFile[] files=client.listFiles(path);
+		for(FTPFile file:files){
+			if(file.isFile()){
+				fileNameMap.put(file.getName(), "");
+			}
+		}
+		return fileNameMap;
+	}
 	public static void main(String[] args) throws FTPClientException { 
 		try {
+			getFileNameMap("/home/heaven/wanghouda");
 			
-			//System.out.println(getFTPClient().makeDirectory("/home/heaven/www"));
-			// FtpClientUtil.uploadToRemote(remotePath, fileName,
-			// localInputStream);
-			File localFile=new File("d:/word3.txt");
-			FileInputStream fin=new FileInputStream(localFile);
 			
-			uploadToRemote("/home/heaven/www/word5.txt", fin);
-			//disconnect();
-			//downloadToLocal("/home/heaven/derby.log", "d:/");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 	}
