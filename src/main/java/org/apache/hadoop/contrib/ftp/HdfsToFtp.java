@@ -58,6 +58,7 @@ public class HdfsToFtp {
 			}
 			
 		}
+		
 		Log.info("You input param is:"+argv[0]+" "+argv[1]+" "+(argv.length>2?argv[2]:"")+" "+(argv.length>3?argv[3]:""));
 		Path hdfsPath = new Path(srcPath);
 		Path ftpPath = new Path(dstPath);
