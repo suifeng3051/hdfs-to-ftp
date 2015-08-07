@@ -29,6 +29,10 @@ import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author heaven
+ * @mail wanghouda@126.com
+ */
 public class HdfsToFtp {
 	private static Logger logger=LoggerFactory.getLogger(HdfsToFtp.class.getClass());
 
@@ -39,7 +43,6 @@ public class HdfsToFtp {
 	}
 
 	public static void main(String[] argv) throws IOException {
-		
 		if(argv==null||argv.length<2){
 			printAndExit("输入参数不合法!");
 		}
@@ -81,7 +84,8 @@ public class HdfsToFtp {
 		//获取hdfs文件系统
 		Configuration conf = new Configuration();
 		FileSystem hdfsSystem = FileSystem.get(conf);
-		FileUtils.copy(hdfsSystem, hdfsPath,ftpPath,queryStr, false, overwrite, conf);
+		MyUtils.copyAndRemove(hdfsSystem, hdfsPath,ftpPath,queryStr, false, overwrite, conf);
+		//FileUtils.copy(hdfsSystem, hdfsPath,ftpPath,queryStr, false, overwrite, conf);
 		
 	}
 }

@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.net.ftp.FTPClient;
@@ -27,6 +29,24 @@ public class FileUtils {
 	 * @throws ParseException
 	 */
 	public static boolean copy(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException {
+		FileStatus fileStatus = srcFS.getFileStatus(src);
+		// 获取ftpclient
+		FTPClient ftpClient = FtpClientUtil.getFTPClient();
+		boolean result = false;
+		try {
+			result = copy(srcFS, fileStatus, dst, queryStr, deleteSource, overwrite, conf, ftpClient);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				FtpClientUtil.disconnect();
+			} catch (IOException ioe) {
+				throw new FTPException("Failed to disconnect", ioe);
+			}
+		}
+		return result;
+	}
+	public static boolean copyAndRemove(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException {
 		FileStatus fileStatus = srcFS.getFileStatus(src);
 		// 获取ftpclient
 		FTPClient ftpClient = FtpClientUtil.getFTPClient();
@@ -62,10 +82,17 @@ public class FileUtils {
 			long beginFilter=0;
 			long endFileter=0;
 			if (queryStr != null) {
-				beginFilter = System.currentTimeMillis();
-				Long[] timeRange = parseTimeRange(queryStr);
-				contents = getNewContents(timeRange, contents);
-				endFileter=System.currentTimeMillis();
+				if(queryStr.startsWith("[")){
+					beginFilter = System.currentTimeMillis();
+					contents = getFilterContents(queryStr, contents);
+					endFileter=System.currentTimeMillis();
+				}else{
+					beginFilter = System.currentTimeMillis();
+					Long[] timeRange = parseTimeRange(queryStr);
+					contents = getNewContents(timeRange, contents);
+					endFileter=System.currentTimeMillis();
+				}
+				
 			}
 			Log.info("total file count:" + contents.length);
 			Map<String, String> fileNameMap=null;
@@ -121,6 +148,21 @@ public class FileUtils {
 
 	}
 
+	private static FileStatus[] getFilterContents(String queryStr, FileStatus[] contents) {
+		String reg=queryStr.substring(1, queryStr.length()-1);
+		Pattern pattern = Pattern.compile(reg);
+		List<FileStatus> statusList = new ArrayList<FileStatus>();
+		for(FileStatus status:contents){
+			if(!status.isDirectory()){
+				String fileName=status.getPath().getName();
+				Matcher matcher = pattern.matcher(fileName);
+				if(matcher.matches()){
+					statusList.add(status);
+				}
+			}
+		}
+		return statusList.toArray(new FileStatus[statusList.size()]);
+	}
 	/**
 	 * filter files
 	 */

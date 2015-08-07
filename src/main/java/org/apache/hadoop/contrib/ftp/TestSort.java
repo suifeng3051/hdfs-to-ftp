@@ -7,14 +7,8 @@ import org.apache.commons.lang.math.RandomUtils;
 public class TestSort {
 	
 	public static void main(String[] args) {
-		int count=5000000;
-		long begin=System.currentTimeMillis();
-		MyFile contents[]=initMyFiles(count);
-		long end=System.currentTimeMillis();
-		contents=quicksort(contents, 0, contents.length-1);
-		long endsort=System.currentTimeMillis();
-		System.out.println("init time:"+(end-begin));
-		System.out.println("sort time:"+(endsort-end));
+		String path=TestSort.class.getResource("/").getPath();
+		System.out.println(path);
 	}
 	private static MyFile[] initMyFiles(int count) {
 		 MyFile contents[]=new MyFile[count];

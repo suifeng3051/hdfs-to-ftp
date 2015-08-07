@@ -19,6 +19,7 @@ public class ConfigUtils {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+			
 		}
 	}
 	private static File loadResource(String resourceName) {
@@ -30,7 +31,7 @@ public class ConfigUtils {
 		return props.getProperty(string);
 	}
 	public static String getFilePath(String fileName) {
-		return getConfigDir() + fileName;
+		return ConfigUtils.class.getClassLoader().getResource(fileName).getPath();
 	}
 	public static String getConfigDir() {
 		String systemPath=System.getProperty("user.dir") ;;
