@@ -21,11 +21,15 @@ import org.apache.hadoop.fs.ftp.FTPException;
 import org.apache.hadoop.io.IOUtils;
 import org.mortbay.log.Log;
 
+/**
+ * 文件操作工具类
+ * @author 王厚达
+ *
+ */
 public class FileUtils {
 
 	/**
-	 * Copy files between FileSystems.
-	 * 
+	 * 两个文件系统之间拷贝对象方法
 	 * @throws ParseException
 	 */
 	public static boolean copy(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException {
@@ -46,6 +50,18 @@ public class FileUtils {
 		}
 		return result;
 	}
+	/**
+	 * @param srcFS
+	 * @param src
+	 * @param dst
+	 * @param queryStr
+	 * @param deleteSource
+	 * @param overwrite
+	 * @param conf
+	 * @return Boolean
+	 * @throws IOException
+	 * @throws ParseException
+	 */
 	public static boolean copyAndRemove(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException {
 		FileStatus fileStatus = srcFS.getFileStatus(src);
 		// 获取ftpclient
@@ -68,7 +84,6 @@ public class FileUtils {
 
 	/**
 	 * Copy files between FileSystems.
-	 * 
 	 * @throws ParseException
 	 */
 	public static boolean copy(FileSystem srcFS, FileStatus srcStatus, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf, FTPClient ftpClient) throws IOException,
@@ -148,6 +163,12 @@ public class FileUtils {
 
 	}
 
+	/**
+	 * 按文件名内容过滤
+	 * @param queryStr
+	 * @param contents
+	 * @return FileStatus[] 
+	 */
 	private static FileStatus[] getFilterContents(String queryStr, FileStatus[] contents) {
 		String reg=queryStr.substring(1, queryStr.length()-1);
 		Pattern pattern = Pattern.compile(reg);
@@ -165,6 +186,9 @@ public class FileUtils {
 	}
 	/**
 	 * filter files
+	 * @param timeRange
+	 * @param fileStatus
+	 * @return FileStatus[]
 	 */
 	private static FileStatus[] getNewContents(Long[] timeRange, FileStatus[] fileStatus) {
 		List<FileStatus> statusList = new ArrayList<FileStatus>();
@@ -233,6 +257,13 @@ public class FileUtils {
 		return n;
 	}
 
+	/**
+	 * 获取分区方法
+	 * @param content
+	 * @param left
+	 * @param right
+	 * @return int
+	 */
 	static int partition(FileStatus content[], int left, int right) {
 		FileStatus pivot = content[left];
 		while (left < right) {
@@ -249,9 +280,5 @@ public class FileUtils {
 		return left;
 	}
 
-	public static void main(String[] args) {
-		Path path = new Path("/user/home/adsfe.xd");
-		System.out.println(path.getName().contains("."));
-	}
 
 }
