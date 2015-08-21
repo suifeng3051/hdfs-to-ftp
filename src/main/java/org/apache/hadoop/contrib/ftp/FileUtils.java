@@ -31,8 +31,9 @@ public class FileUtils {
 	/**
 	 * 两个文件系统之间拷贝对象方法
 	 * @throws ParseException
+	 * @throws FTPClientException 
 	 */
-	public static boolean copy(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException {
+	public static boolean copy(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException, FTPClientException {
 		FileStatus fileStatus = srcFS.getFileStatus(src);
 		// 获取ftpclient
 		FTPClient ftpClient = FtpClientUtil.getFTPClient();
@@ -43,13 +44,15 @@ public class FileUtils {
 			e.printStackTrace();
 		} finally {
 			try {
-				FtpClientUtil.disconnect();
+				FtpClientUtil.releaseFtpClient();
 			} catch (IOException ioe) {
 				throw new FTPException("Failed to disconnect", ioe);
 			}
 		}
 		return result;
 	}
+	
+	
 	/**
 	 * @param srcFS
 	 * @param src
@@ -61,8 +64,9 @@ public class FileUtils {
 	 * @return Boolean
 	 * @throws IOException
 	 * @throws ParseException
+	 * @throws FTPClientException 
 	 */
-	public static boolean copyAndRemove(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException {
+	public static boolean copyAndRemove(FileSystem srcFS, Path src, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf) throws IOException, ParseException, FTPClientException {
 		FileStatus fileStatus = srcFS.getFileStatus(src);
 		// 获取ftpclient
 		FTPClient ftpClient = FtpClientUtil.getFTPClient();
@@ -74,7 +78,7 @@ public class FileUtils {
 			e.printStackTrace();
 		} finally {
 			try {
-				FtpClientUtil.disconnect();
+				FtpClientUtil.releaseFtpClient();
 			} catch (IOException ioe) {
 				throw new FTPException("Failed to disconnect", ioe);
 			}
@@ -85,9 +89,10 @@ public class FileUtils {
 	/**
 	 * Copy files between FileSystems.
 	 * @throws ParseException
+	 * @throws FTPClientException 
 	 */
 	public static boolean copy(FileSystem srcFS, FileStatus srcStatus, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf, FTPClient ftpClient) throws IOException,
-			ParseException {
+			ParseException, FTPClientException {
 		Path src = srcStatus.getPath();
 		String dstPath = dst.toUri().getPath();
 		if (srcStatus.isDirectory()) {// 若原路径是一个目录
@@ -169,7 +174,7 @@ public class FileUtils {
 	 * @param contents
 	 * @return FileStatus[] 
 	 */
-	private static FileStatus[] getFilterContents(String queryStr, FileStatus[] contents) {
+	public static FileStatus[] getFilterContents(String queryStr, FileStatus[] contents) {
 		String reg=queryStr.substring(1, queryStr.length()-1);
 		Pattern pattern = Pattern.compile(reg);
 		List<FileStatus> statusList = new ArrayList<FileStatus>();
@@ -190,7 +195,7 @@ public class FileUtils {
 	 * @param fileStatus
 	 * @return FileStatus[]
 	 */
-	private static FileStatus[] getNewContents(Long[] timeRange, FileStatus[] fileStatus) {
+	public static FileStatus[] getNewContents(Long[] timeRange, FileStatus[] fileStatus) {
 		List<FileStatus> statusList = new ArrayList<FileStatus>();
 		for (int i = 0; i < fileStatus.length; i++) {
 			long modificationTime = fileStatus[i].getModificationTime();
@@ -212,7 +217,7 @@ public class FileUtils {
 	 * 
 	 * @throws ParseException
 	 **/
-	private static Long[] parseTimeRange(String queryStr) throws ParseException {
+	public static Long[] parseTimeRange(String queryStr) throws ParseException {
 		int length = queryStr.trim().length();
 		SimpleDateFormat sdf = null;
 		Long beginTime = null;

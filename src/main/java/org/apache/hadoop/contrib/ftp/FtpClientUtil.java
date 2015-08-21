@@ -20,19 +20,18 @@ import org.slf4j.LoggerFactory;
 
 public class FtpClientUtil {
 	/** logger */
-	private static Logger logger=LoggerFactory.getLogger(HdfsToFtp.class.getClass());
+	private static Logger logger = LoggerFactory.getLogger(FtpClientUtil.class);
 	private static ThreadLocal<FTPClient> ftpClientThreadLocal;
 	private static String host;
 	private static int port;
 	private static String username;
 	private static String password;
 	private static boolean binaryTransfer;
-	//private static boolean passiveMode;
-	//private static String encoding;
+	private static String passiveMode;
+	private static String encoding;
 	private static int clientTimeout;
 	private static List<String> listFileNames;
-	// private static String filePathOfFtpserver;
-
+	public static  int threadNum;
 	static {
 		ConfigUtils.loadConfig();
 		ftpClientThreadLocal = new ThreadLocal<FTPClient>();
@@ -40,20 +39,19 @@ public class FtpClientUtil {
 		port = Integer.parseInt(ConfigUtils.getType("ftp.port"));
 		username = ConfigUtils.getType("ftp.username");
 		password = ConfigUtils.getType("ftp.password");
-		/*
-		 * binaryTransfer = Boolean.parseBoolean(ConfigUtils
-		 * .getType("ftp.binaryTransfer")); passiveMode =
-		 * Boolean.parseBoolean(ConfigUtils .getType("ftp.passiveMode"));
-		 * encoding = ConfigUtils.getType("ftp.encoding");
-		 */
-		clientTimeout = Integer.parseInt(ConfigUtils
-				.getType("ftp.timeout"));
+		clientTimeout = Integer.parseInt(ConfigUtils.getType("ftp.timeout"));
+		passiveMode = ConfigUtils.getType("ftp.passivemode","false");
+		encoding = ConfigUtils.getType("ftp.encoding","GBK");
+		threadNum=Integer.valueOf(ConfigUtils.getType("transfer.threadnum","10"));
 		listFileNames = new ArrayList<String>();
-		logger.info("ftp.host:"+host);
-		logger.info("ftp.port:"+port);
-		logger.info("ftp.username:"+username);
-		logger.info("ftp.password:"+password);
-		logger.info("ftp.timeout:"+clientTimeout);
+		logger.info("ftp.host:" + host);
+		logger.info("ftp.port:" + port);
+		logger.info("ftp.username:" + username);
+		logger.info("ftp.password:" + password);
+		logger.info("thread.num:" + threadNum);
+		logger.info("ftp.timeout:" + clientTimeout);
+		logger.info("ftp.passivemode:" + passiveMode);
+		logger.info("ftp.encoding:" + encoding);
 	}
 
 	/**
@@ -63,32 +61,45 @@ public class FtpClientUtil {
 	 * @throws SocketException
 	 * @throws IOException
 	 */
-	public static FTPClient getFTPClient() throws SocketException, IOException {
-		if (ftpClientThreadLocal.get() != null
-				&& ftpClientThreadLocal.get().isConnected()) {
+	public static  FTPClient getFTPClient() throws SocketException, IOException, FTPClientException {
+		if (ftpClientThreadLocal.get() != null && ftpClientThreadLocal.get().isConnected()) {
 			return ftpClientThreadLocal.get();
 		} else {
-			FTPClient ftpClient = new FTPClient();
-			//ftpClient.setControlEncoding(encoding);
-			ftpClient.setConnectTimeout(clientTimeout);
-			ftpClient.connect(host, port);
-			int reply = ftpClient.getReplyCode();
-			if (FTPReply.isPositiveCompletion(reply)) {
-				ftpClient.login(username, password);
-				setFileType(ftpClient);
-			} else {
-				ftpClient.disconnect();
-			}
-			 ftpClient.setBufferSize(1024); 
-	         ftpClient.setControlEncoding("GBK" ); 
-	            //设置文件类型（二进制） 
-	         ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE); 
-			/*if (passiveMode) {
-				ftpClient.enterLocalPassiveMode();
-			}*/
+			FTPClient ftpClient=connect();
 			ftpClientThreadLocal.set(ftpClient);
 			return ftpClient;
 		}
+	}
+
+	/**
+	 * 创建一个ftpClient连接
+	 * @return FTPClient
+	 * @throws SocketException
+	 * @throws IOException
+	 * @throws FTPClientException
+	 */
+	private static FTPClient connect() throws SocketException, IOException, FTPClientException {
+		FTPClient ftpClient = new FTPClient();
+		ftpClient.setConnectTimeout(clientTimeout);
+		ftpClient.connect(host, port);
+		int reply = ftpClient.getReplyCode();
+		if (FTPReply.isPositiveCompletion(reply)) {
+			boolean result = ftpClient.login(username, password);
+			if (!result) {
+				throw new FTPClientException("ftpClient登陆失败! userName:" + username + " ; password:" + password);
+			} 
+			setFileType(ftpClient);
+		} else {
+			ftpClient.disconnect();
+		}
+		ftpClient.setBufferSize(1024);
+		ftpClient.setControlEncoding(encoding);
+		// 设置文件类型（二进制）
+		ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
+		if (passiveMode.equals("true")) {
+			ftpClient.enterLocalPassiveMode();
+		}
+		return ftpClient;
 	}
 
 	/**
@@ -109,26 +120,25 @@ public class FtpClientUtil {
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
-	public static void disconnect() throws IOException {
+	public static void releaseFtpClient() throws IOException, FTPClientException {
+		logger.info("disconnect ftpClient");
 		FTPClient ftpClient = getFTPClient();
 		ftpClient.logout();
 		if (ftpClient.isConnected()) {
 			ftpClient.disconnect();
-			ftpClient = null;
-			ftpClientThreadLocal.set(ftpClient);
+			ftpClientThreadLocal.set(null);
 		}
 	}
 
 	/**
-	 * @description 
-	 *             
+	 * @description
+	 * 
 	 * @param delFiles
 	 * @return
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
-	public static boolean deleteRemoteFiles(String[] delFiles)
-			throws IOException, FTPClientException {
+	public static boolean deleteRemoteFiles(String[] delFiles) throws IOException, FTPClientException {
 		List<String> list = listNames();
 		for (String filename : delFiles) {
 			for (Iterator<String> it = list.iterator(); it.hasNext();) {
@@ -150,13 +160,11 @@ public class FtpClientUtil {
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
-	public static List<String> listNames() throws IOException,
-			FTPClientException {
+	public static List<String> listNames() throws IOException, FTPClientException {
 		return listNames(null);
 	}
 
-	public static List<String> listNames(String remotePath) throws IOException,
-			FTPClientException {
+	public static List<String> listNames(String remotePath) throws IOException, FTPClientException {
 		return listNames(remotePath, true);
 	}
 
@@ -167,8 +175,7 @@ public class FtpClientUtil {
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
-	public static List<String> listNames(String remotePath,
-			boolean containSubdirectory) throws IOException, FTPClientException {
+	public static List<String> listNames(String remotePath, boolean containSubdirectory) throws IOException, FTPClientException {
 		if (null == remotePath) {
 			remotePath = "." + File.separator;
 		}
@@ -180,27 +187,20 @@ public class FtpClientUtil {
 			for (FTPFile file : files) {
 				if (!file.getName().equals(".") && !file.getName().equals("..")) {
 					if (file.isFile()) {
-						listFileNames
-								.add("." + File.separator + file.getName());
+						listFileNames.add("." + File.separator + file.getName());
 					} else {
-						listNames2(
-								remotePath + file.getName() + File.separator,
-								containSubdirectory);
+						listNames2(remotePath + file.getName() + File.separator, containSubdirectory);
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw new FTPClientException(
-					"",
-					e);
+			throw new FTPClientException("", e);
 		}
 		return listFileNames;
 	}
 
-
-	private static void listNames2(String remotePath,
-			boolean containSubdirectory) throws FTPClientException {
+	private static void listNames2(String remotePath, boolean containSubdirectory) throws FTPClientException {
 		try {
 			FTPClient client = getFTPClient();
 			client.changeWorkingDirectory(remotePath);
@@ -213,18 +213,14 @@ public class FtpClientUtil {
 					if (file.isFile()) {
 						listFileNames.add(remotePath + file.getName());
 					}
-					if (file.isDirectory() && (!".".equals(file.getName()))
-							&& (!"..".equals(file.getName()))) {
-						String path = remotePath + file.getName()
-								+ File.separator;
+					if (file.isDirectory() && (!".".equals(file.getName())) && (!"..".equals(file.getName()))) {
+						String path = remotePath + file.getName() + File.separator;
 						listNames2(path, containSubdirectory);
 					}
 				}
 			}
 		} catch (IOException e) {
-			throw new FTPClientException(
-					"",
-					e);
+			throw new FTPClientException("", e);
 		}
 	}
 
@@ -240,9 +236,7 @@ public class FtpClientUtil {
 	 * @throws IOException
 	 * @throws FTPClientException
 	 */
-	public static boolean uploadToRemote(String remotePath, String fileName,
-			InputStream localInputStream) throws IOException,
-			FTPClientException {
+	public static boolean uploadToRemote(String remotePath, String fileName, InputStream localInputStream) throws IOException, FTPClientException {
 		FTPClient client = getFTPClient();
 		int reply;
 		reply = client.getReplyCode();
@@ -251,8 +245,7 @@ public class FtpClientUtil {
 		}
 		client.makeDirectory(remotePath);
 		client.changeWorkingDirectory(remotePath);
-		boolean result = client.storeFile(fileName,
-				localInputStream);
+		boolean result = client.storeFile(fileName, localInputStream);
 		localInputStream.close();
 		return result;
 	}
@@ -266,8 +259,7 @@ public class FtpClientUtil {
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
-	public static boolean downloadToLocal(String remotePath, String localPath)
-			throws IOException, IOException {
+	public static boolean downloadToLocal(String remotePath, String localPath) throws IOException, IOException, FTPClientException {
 		return downloadToLocal(remotePath, localPath, null);
 	}
 
@@ -280,9 +272,8 @@ public class FtpClientUtil {
 	 * @throws FTPClientException
 	 * @throws IOException
 	 */
-	public static boolean downloadToLocal(String remotePath, String localPath,
-			String[] fileNames) throws IOException, IOException {
-		
+	public static boolean downloadToLocal(String remotePath, String localPath, String[] fileNames) throws IOException, IOException, FTPClientException {
+
 		FTPClient client = getFTPClient();
 		client.changeWorkingDirectory(remotePath);
 		FTPFile[] ftpList = client.listFiles(remotePath);
@@ -292,9 +283,8 @@ public class FtpClientUtil {
 				if (f.getSize() > 0) {
 					File file = new File(localPath);
 					file.mkdirs();
-					OutputStream out = new FileOutputStream(localPath
-							+ f.getName());
-					result = client.retrieveFile(f.getName(), out); 
+					OutputStream out = new FileOutputStream(localPath + f.getName());
+					result = client.retrieveFile(f.getName(), out);
 					out.close();
 					if (!result) {
 						break;
@@ -305,9 +295,8 @@ public class FtpClientUtil {
 			for (String fileName : fileNames) {
 				File file = new File(localPath);
 				file.mkdirs();
-				OutputStream out = new FileOutputStream(localPath
-						+ File.separator + fileName);
-				result = client.retrieveFile(fileName, out); 
+				OutputStream out = new FileOutputStream(localPath + File.separator + fileName);
+				result = client.retrieveFile(fileName, out);
 				out.close();
 				if (!result) {
 					break;
@@ -324,8 +313,7 @@ public class FtpClientUtil {
 	 * @throws IOException
 	 * @throws FTPClientException
 	 */
-	public static int getRemoteFileSize(String fileName) throws IOException,
-			FTPClientException {
+	public static int getRemoteFileSize(String fileName) throws IOException, FTPClientException {
 		FTPClient client = getFTPClient();
 		int size = 0;
 		FTPFile[] ftpList = client.listFiles();
@@ -344,20 +332,18 @@ public class FtpClientUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean downloadToLocal2(String filename, String localPath)
-			throws Exception {
+	public static boolean downloadToLocal2(String filename, String localPath) throws Exception {
 		List<String> list = listNames();
 		OutputStream out;
 		try {
 			for (Iterator<String> it = list.iterator(); it.hasNext();) {
 				String filepath = it.next();
 				if (filepath.contains(filename)) {
-					String remoteFilePath = filepath.substring(1,
-							filepath.length());
+					String remoteFilePath = filepath.substring(1, filepath.length());
 					File file = new File(localPath + remoteFilePath);
 					new File(file.getParent()).mkdirs();
 					out = new FileOutputStream(localPath + remoteFilePath);
-					getFTPClient().retrieveFile(filepath, out); 
+					getFTPClient().retrieveFile(filepath, out);
 					out.close();
 				}
 			}
@@ -368,14 +354,13 @@ public class FtpClientUtil {
 	}
 
 	/**
-	 * @description 
+	 * @description
 	 * @return
 	 * @throws SocketException
 	 * @throws IOException
 	 * @throws FTPClientException
 	 */
-	public static boolean mkdirs(String remoteDir) throws SocketException,
-			IOException, FTPClientException {
+	public static boolean mkdirs(String remoteDir) throws SocketException, IOException, FTPClientException {
 		String[] dirs = remoteDir.split("/");
 		String remotePath = ".";
 		for (String dir : dirs) {
@@ -389,35 +374,35 @@ public class FtpClientUtil {
 		}
 		return true;
 	}
-	public static Map<String, String> getFileNameMap(String path) throws SocketException, IOException{
-		Map<String, String> fileNameMap=new HashMap<String, String>();
-		FTPClient client= getFTPClient();
-		FTPFile[] files=client.listFiles(path);
-		for(FTPFile file:files){
-			if(file.isFile()){
+
+	public static Map<String, String> getFileNameMap(String path) throws SocketException, IOException, FTPClientException {
+		Map<String, String> fileNameMap = new HashMap<String, String>();
+		FTPClient client = getFTPClient();
+		FTPFile[] files = client.listFiles(path);
+		for (FTPFile file : files) {
+			if (file.isFile()) {
 				fileNameMap.put(file.getName(), "");
 			}
 		}
 		return fileNameMap;
 	}
-	public static void main(String[] args) throws FTPClientException { 
+
+	public static void main(String[] args) throws FTPClientException {
 		try {
 			getFileNameMap("/home/heaven/wanghouda");
-			
-			
+
 		} catch (IOException e) {
-			
+
 			e.printStackTrace();
 		}
 	}
 
-	public static boolean uploadToRemote(String src, InputStream in) throws IOException {
-		FTPClient client= getFTPClient();
-		boolean result = client.storeFile(src,in);
+	public static boolean uploadToRemote(String src, InputStream in) throws IOException, FTPClientException {
+		FTPClient client = getFTPClient();
+		boolean result = client.storeFile(src, in);
 		in.close();
 		return result;
-		
+
 	}
 
 }
-

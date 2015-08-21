@@ -15,7 +15,11 @@ public class FTPClientException extends Exception {
 	private static final long serialVersionUID = 1L;
 
 	public FTPClientException(String string, IOException e) {
-		// TODO Auto-generated constructor stub
+		super(string,e);
 	}
+	public FTPClientException(String string) {
+		super(string);
+	}
+	
 
 }

@@ -68,6 +68,15 @@ public class ConfigUtils {
 	 * @param string
 	 * @return String
 	 */
+	public static String getType(String string,String defaultValue) {
+		return props.getProperty(string,defaultValue);
+	}
+	
+	/**
+	 * 获取配置文件的内容值
+	 * @param string
+	 * @return String
+	 */
 	public static String getType(String string) {
 		return props.getProperty(string);
 	}
