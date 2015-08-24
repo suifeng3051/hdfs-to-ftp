@@ -87,7 +87,8 @@ public class ConfigUtils {
 	 * @return String
 	 */
 	public static String getFilePath(String fileName) {
-		return ConfigUtils.class.getClassLoader().getResource(fileName).getPath();
+		//return ConfigUtils.class.getClassLoader().getResource(fileName).getPath();
+		return getConfigDir()+fileName;
 	}
 	
 	/**
@@ -105,6 +106,7 @@ public class ConfigUtils {
 	 */
 	public static void main(String[] args) {
 		loadConfig();
+		System.out.println(getType("ftp.host"));
 	}
 
 }
