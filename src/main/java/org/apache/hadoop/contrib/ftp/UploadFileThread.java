@@ -11,15 +11,15 @@ import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CopyThread implements Callable<Boolean>{
-	private static final Logger logger = LoggerFactory.getLogger(CopyThread.class);
+public class UploadFileThread implements Callable<Boolean>{
+	private static final Logger logger = LoggerFactory.getLogger(UploadFileThread.class);
 	private FileSystem srcFS;
 	private Path src;
 	private Path dst;
 	private boolean deleteSource;
 	
 	
-	public CopyThread(FileSystem srcFS, Path src, Path dst, boolean deleteSource){
+	public UploadFileThread(FileSystem srcFS, Path src, Path dst, boolean deleteSource){
 		this.srcFS=srcFS;
 		this.src=src;
 		this.dst=dst;
