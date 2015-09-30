@@ -1,4 +1,4 @@
-package org.apache.hadoop.contrib.ftp;
+package com.hdfstoftp.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,9 +17,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.ftp.FTPException;
 import org.apache.hadoop.io.IOUtils;
 import org.mortbay.log.Log;
+
+import com.hdfstoftp.config.ConfigUtils;
 
 /**
  * 文件操作工具类
@@ -43,11 +44,7 @@ public class FileUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				FtpClientUtil.releaseFtpClient();
-			} catch (IOException ioe) {
-				throw new FTPException("Failed to disconnect", ioe);
-			}
+			FtpClientUtil.releaseFtpClient();
 		}
 		return result;
 	}
@@ -77,11 +74,7 @@ public class FileUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				FtpClientUtil.releaseFtpClient();
-			} catch (IOException ioe) {
-				throw new FTPException("Failed to disconnect", ioe);
-			}
+			FtpClientUtil.releaseFtpClient();
 		}
 		return result;
 	}
@@ -90,9 +83,10 @@ public class FileUtils {
 	 * Copy files between FileSystems.
 	 * @throws ParseException
 	 * @throws FTPClientException 
+	 * @throws com.hdfstoftp.util.FTPClientException 
 	 */
 	public static boolean copy(FileSystem srcFS, FileStatus srcStatus, Path dst, String queryStr, boolean deleteSource, boolean overwrite, Configuration conf, FTPClient ftpClient) throws IOException,
-			ParseException, FTPClientException {
+			ParseException, FTPClientException, com.hdfstoftp.util.FTPClientException {
 		Path src = srcStatus.getPath();
 		String dstPath = dst.toUri().getPath();
 		if (srcStatus.isDirectory()) {// 若原路径是一个目录
