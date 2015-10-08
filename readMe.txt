@@ -38,10 +38,20 @@
 四、配置文件中的相关参数
 
 # ftp configure
-ftp.host=192.168.29.131
-ftp.port=21 ftp.username=heaven
+ftp.host=192.168.29.131 
+ftp.port=21
+ftp.username=heaven
 ftp.password=heaven
-transfer.threadnum=5 （注意，此参数过大有可能导致ftp会报421异常，是因为连接数超过了ftp服务器限制导致）
+ftp.transfer.threadnum=10
 ftp.timeout=5000
-ftp.passivemode=false
+ftp.passivemode=true
 ftp.encoding=GBK
+#文件的传输类型，其值对应着FTPClient类的静态常量，2表示以字节流方式
+ftp.transfer.file.type=2
+#上传文件失败重试次数
+ftp.retry.times=3
+#是否对上传成功的文件进行rename
+ftp.rename.uploaded=true
+# hdfs configure
+
+
