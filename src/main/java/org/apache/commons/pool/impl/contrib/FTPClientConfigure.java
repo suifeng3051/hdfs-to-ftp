@@ -13,10 +13,8 @@ public class FTPClientConfigure {
 	private String passiveMode;
 	private String encoding;
 	private int clientTimeout;
-	private int threadNum;
 	private int transferFileType;
-	private boolean renameUploaded;
-	private int retryTimes;
+	
 
 	public String getHost() {
 		return host;
@@ -75,14 +73,6 @@ public class FTPClientConfigure {
 		this.clientTimeout = clientTimeout;
 	}
 
-	public int getThreadNum() {
-		return threadNum;
-	}
-
-	public void setThreadNum(int threadNum) {
-		this.threadNum = threadNum;
-	}
-
 	public int getTransferFileType() {
 		return transferFileType;
 	}
@@ -91,27 +81,19 @@ public class FTPClientConfigure {
 		this.transferFileType = transferFileType;
 	}
 
-	public boolean isRenameUploaded() {
-		return renameUploaded;
-	}
-
-	public void setRenameUploaded(boolean renameUploaded) {
-		this.renameUploaded = renameUploaded;
-	}
-
-	public int getRetryTimes() {
-		return retryTimes;
-	}
-
-	public void setRetryTimes(int retryTimes) {
-		this.retryTimes = retryTimes;
-	}
 
 	@Override
 	public String toString() {
-		return "FTPClientConfig [host=" + host + "\n port=" + port + "\n username=" + username + "\n password=" + password  + "\n passiveMode=" + passiveMode
-				+ "\n encoding=" + encoding + "\n clientTimeout=" + clientTimeout + "\n threadNum=" + threadNum + "\n transferFileType="
-				+ transferFileType + "\n renameUploaded=" + renameUploaded + "\n retryTimes=" + retryTimes + "]";
+		return "FTPClientConfig [" + 
+				"\n host=" + host + 
+				"\n port=" + port + 
+				"\n username=" + username + 
+				"\n password=" + password  + 
+				"\n passiveMode=" + passiveMode+ 
+				"\n encoding=" + encoding + 
+				"\n clientTimeout=" + clientTimeout + 
+				"\n transferFileType=" + transferFileType +
+				"]";
 	}
 
 }
